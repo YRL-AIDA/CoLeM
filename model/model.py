@@ -1,7 +1,8 @@
-"""TODO"""
+import torch
 import torch.nn as nn
 from transformers import AutoConfig, AutoModel
 from config import Config
+from model.loss import nt_xent_loss
 
 
 class Colem(nn.Module):
@@ -9,14 +10,15 @@ class Colem(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Configuration
         self.model_config = Config()["model"]
-
         pretrained_model_name = self.model_config.get(
-            "pretrained_model_name", 
+            "pretrained_model_name",
             "bert-base-uncased"
         )
         self.config = AutoConfig.from_pretrained(pretrained_model_name)
 
+        # Layers
         self.encoder = AutoModel.from_pretrained(pretrained_model_name)
         self.projector = nn.Sequential(
             nn.Linear(in_features=self.config.hidden_size, out_features=self.config.hidden_size),
@@ -27,11 +29,33 @@ class Colem(nn.Module):
             )
         )
 
-    def forward(self):
-        """TODO"""
-        pass
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """CoLeM forward pass.
+
+        Args:
+            input (torch.Tensor): batch(2*batch_size, sequence_length) of columns
+
+        Returns:
+            torch.Tensor: NT-Xent loss
+        """
+        encoder_last_hidden_state = self.encoder(input)[0]  # (2*batch_size, sequence_length, encoder_output)
+        projector_output = self.projector(encoder_last_hidden_state)  # (2*batch_size, sequence_length, reduced_output)
+
+        # Get column representations, i.e. encoder [CLS] token positions.
+        output = projector_output[:, 0, :]  # (2*batch_size, reduced_output)
+        return nt_xent_loss(output)
 
 
 if __name__ == "__main__":
+    # Model arch
     model = Colem()
     print(model)
+
+    # Test forward pass
+    torch.manual_seed(42)
+
+    x = torch.randint(0, 30000, (2 * 32, 512))
+    print(x.shape)
+
+    loss = model(x)
+    print(loss)
