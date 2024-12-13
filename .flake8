@@ -4,12 +4,18 @@ import-order-style = pycharm
 max-line-length = 140
 max-complexity = 15
 ignore =
-    E722, # duplicates B001 from flake8-bugbear
-    E731, # we want use lambdas
-    C408, # dict(), list(), tuple() is ok
-    W503, # line breaks before binary operator is ok according to PEP8, flake8 error
-    A003, # python builtins as class attributes is ok
-    F541  # f-string without placeholders is ok
+    # duplicates B001 from flake8-bugbear
+    E722,
+    # we want use lambdas 
+    E731,
+    # dict(), list(), tuple() is ok 
+    C408,
+    # line breaks before binary operator is ok according to PEP8, flake8 error
+    W503,
+    # python builtins as class attributes is ok
+    A003,
+    # f-string without placeholders is ok
+    F541
 exclude =
     .git,
     .idea
