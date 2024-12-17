@@ -1,0 +1,29 @@
+{
+	"num_labels": 170,
+	"num_gpu": 4,
+	"save_period_in_epochs": 10,
+	"metrics": ["f1_micro", "f1_macro", "f1_weighted"],
+	"pretrained_model_name": "bert-base-multilingual-uncased",
+	"table_serialization_type": "column_wise",
+	"batch_size": 32,
+	"num_epochs": 30,
+	"random_seed": 2024,
+	"logs_dir": "logs/",
+	"train_log_filename": "logs/train.log",
+	"test_log_filename": "logs/test.log",
+	"start_from_checkpoint": false,
+	"checkpoint_dir": "checkpoints/",
+	"checkpoint_name": "model_best_f1_weighted.pt",
+	"inference_model_name": "model_table_wise.pt",
+	"inference_dir": "data/inference/",
+	"dataloader": {
+		"valid_split": 0.05,
+		"num_workers": 0
+	},
+	"dataset": {
+		"num_rows": null,
+		"data_dir": "data_source/",
+		"train_path": "train/",
+		"test_path": "test/"
+	}
+}
