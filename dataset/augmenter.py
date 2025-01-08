@@ -17,9 +17,10 @@ class Augmenter:
         
         Note: shuffles and drops (because of sample method)
         """
+        assert 0.0 <= ratio <= 1.0
         column_as_list = column.split(sep)
         num_cells = len(column_as_list)
-        num_samples = int(num_cells * ratio)
+        num_samples = num_cells - int((num_cells * ratio))
         
         return "".join(random.sample(column_as_list, num_samples))
 
