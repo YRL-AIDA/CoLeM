@@ -1,3 +1,5 @@
+package-mode = false
+
 [tool.poetry]
 name = "colem"
 version = "0.1.0"
