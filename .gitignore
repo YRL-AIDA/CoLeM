@@ -139,3 +139,8 @@ cython_debug/
 
 # idea
 .idea/
+
+# ------ End of generic gitignore -------
+
+# Dataset files
+data/*.csv
