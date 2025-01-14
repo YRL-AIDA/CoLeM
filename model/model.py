@@ -1,13 +1,15 @@
 import torch
 import torch.nn as nn
 from transformers import AutoConfig, AutoModel
+from transformers import BertPreTrainedModel
+
 from config import Config
 
 
-class Colem(nn.Module):
+class Colem(BertPreTrainedModel):
     """Contrastive learning model for table understanding tasks."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, config):
+        super().__init__(config)
 
         # Configuration
         self.model_config = Config()["model"]
@@ -28,7 +30,7 @@ class Colem(nn.Module):
             )
         )
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         """CoLeM forward pass.
 
         Args:
@@ -37,24 +39,12 @@ class Colem(nn.Module):
         Returns:
             torch.Tensor: Model output
         """
-        encoder_last_hidden_state = self.encoder(input)[0]  # (2*batch_size, sequence_length, encoder_output)
-        projector_output = self.projector(encoder_last_hidden_state)  # (2*batch_size, sequence_length, reduced_output)
+        encoder_last_hidden_state = self.encoder(
+            input_ids=input_ids,
+            attention_mask=attention_mask
+        )[0]  # (2 * batch_size, sequence_length, encoder_output)
+        projector_output = self.projector(encoder_last_hidden_state)  # (2 * batch_size, sequence_length, reduced_output)
 
         # Get column representations, i.e. encoder [CLS] token positions.
         output = projector_output[:, 0, :]  # (2 * batch_size, reduced_output)
         return output
-
-
-if __name__ == "__main__":
-    # Model arch
-    model = Colem()
-    print(model)
-
-    # Test forward pass
-    torch.manual_seed(42)
-
-    x = torch.randint(0, 3, (2 * 32, 512))  # batch_size = 32 ; output = 512
-    print(x.shape)
-
-    loss = model(x)
-    print(loss)
