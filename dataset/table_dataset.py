@@ -19,25 +19,24 @@ class TableDataset(Dataset):
     """
     def __init__(
             self,
-            data_dir: str,
+            data_dir: str = "data/",
             sep: str = "⇧",
+            engine: str = "python",
+            quotechar: str = '"',
+            on_bad_lines: str = "warn",
             num_rows: Optional[int] = None,
-            file_name=None,
             transform=None,
             target_transform=None,
     ):
-        if file_name:
-            self.df = pd.read_csv(
-                data_dir + file_name,
-                sep=sep,
-                engine="python",
-                quotechar='"',
-                on_bad_lines="warn",
-                nrows=num_rows
-            )
-        else:
-            self.df = self.read_multiple_csv(data_dir, sep, num_rows=num_rows)
-
+        
+        self.df = self._read_multiple_csv(
+            data_dir=data_dir,
+            sep=sep,
+            engine=engine,
+            quotechar=quotechar,
+            on_bad_lines=on_bad_lines,
+            num_rows=num_rows
+        )
         self.transform = transform
         self.target_transform = target_transform
 
@@ -47,7 +46,15 @@ class TableDataset(Dataset):
     def __getitem__(self, idx):
         return self.df.iloc[idx]["column_data"]
 
-    def read_multiple_csv(self, data_dir: str, sep: str, prefix: str = "data_", num_rows: Optional[int] = None) -> pd.DataFrame:
+    def _read_multiple_csv(
+            self,
+            data_dir: str,
+            sep: str,
+            num_rows: Optional[int],
+            engine: str,
+            quotechar: str,
+            on_bad_lines: str
+    ) -> pd.DataFrame:
         """Read dataframe from multiple csv files.
 
         If dataset was split into multiple files, it will be concatenated. Dataset is stored
@@ -64,16 +71,16 @@ class TableDataset(Dataset):
         """
 
         df_list = []
-        chunks = glob.glob(data_dir + f"{prefix}*.csv")
-        assert len(chunks) > 1
+        chunks = glob.glob(data_dir + "*.csv")
+        assert len(chunks) > 0
 
         for filename in chunks:
             df = pd.read_csv(
-                filename,
+                filepath_or_buffer=filename,
                 sep=sep,
-                engine="python",
-                quotechar='"',
-                on_bad_lines="warn",
+                engine=engine,
+                quotechar=quotechar,
+                on_bad_lines=on_bad_lines,
                 nrows=num_rows
             )
             df_list.append(df)

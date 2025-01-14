@@ -4,9 +4,16 @@
         "loss_latent_space_dim": 128
     },
     "data": {
-
+        "data_dir": "data/",
+        "sep": "⇧",
+        "engine": "python",
+        "quotechar": "\"",
+        "on_bad_lines": "warn",
+        "num_rows": null
     },
     "train": {
-
+        "batch_size": 4,
+        "num_epochs": 2,
+        "num_gpus": 1
     }
 }
