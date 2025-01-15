@@ -15,5 +15,10 @@
         "batch_size": 4,
         "num_epochs": 2,
         "num_gpus": 1
+    },
+    "logs": {
+        "dir": "logs/",
+        "train_filename": "train.log",
+        "valid_filename": "valid.log"
     }
 }
