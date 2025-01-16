@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader
 
 from dataset.table_dataset import TableDataset
 
+from torch.utils.data import Sampler
+
 
 class TableDataLoader(DataLoader):
     """Table data loader.
@@ -13,7 +15,7 @@ class TableDataLoader(DataLoader):
     Args:
         dataset: dataset from which to load the data.
         batch_size: how many samples per batch to load.
-        shuffle: perform shuffling of dataset.
+        sampler: dataset sampler.
         collate_fn: merges a list of samples to form a mini-batch of Tensors.
         num_workers: how many subprocesses to use for data loading.
     """
@@ -21,14 +23,14 @@ class TableDataLoader(DataLoader):
         self,
         dataset: TableDataset,
         batch_size: int,
-        shuffle: bool = True,
+        sampler: Sampler,
         collate_fn: Optional[callable] = None,
         num_workers: Optional[int] = 0,
     ):
         self.init_kwargs = {
             'dataset': dataset,
             'batch_size': batch_size,
-            'shuffle': shuffle,
+            "sampler": sampler,
             'collate_fn': collate_fn,
             'num_workers': num_workers
         }
