@@ -2,7 +2,7 @@ import torch
 from torch.nn import functional as F
 
 
-def nt_xent_loss(model_output: torch.Tensor, temperature: float = 0.5) -> torch.Tensor:
+def nt_xent_loss(model_output: torch.Tensor, device: torch.device, temperature: float = 0.5) -> torch.Tensor:
     """Calculate NT-Xent loss.
 
     Args:
@@ -26,7 +26,7 @@ def nt_xent_loss(model_output: torch.Tensor, temperature: float = 0.5) -> torch.
     similarity_matrix[torch.eye(batch_size).bool()] = float("-inf")
 
     # Labels
-    labels = torch.arange(batch_size)
+    labels = torch.arange(batch_size).to(device)
     labels[0::2] += 1
     labels[1::2] -= 1
 
@@ -35,6 +35,7 @@ def nt_xent_loss(model_output: torch.Tensor, temperature: float = 0.5) -> torch.
 
 
 if __name__ == "__main__":
+    # TODO: move to tests
     torch.manual_seed(42)
 
     batch_size = 32
