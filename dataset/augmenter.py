@@ -12,18 +12,18 @@ class Augmenter:
         return "".join(column_as_list)
 
     @staticmethod
-    def drop_cells(column: str, sep: str = ">>", ratio: float = 0.1):
+    def drop_cells(column: str, sep: str = " << ", ratio: float = 0.1):
         """TODO
         
-        Note: shuffles and drops (because of sample method)
+        Note: drops random cells
         """
         assert 0.0 <= ratio <= 1.0
         column_as_list = column.split(sep)
         num_cells = len(column_as_list)
         num_samples = num_cells - int((num_cells * ratio))
-        
-        return "".join(random.sample(column_as_list, num_samples))
 
+        ids = [i for i in range(num_cells)]
+        sampled_ids = random.sample(ids, num_samples)
+        result = [column_as_list[i] for i in range(num_cells) if i in sampled_ids]
 
-if __name__ == "__main__":
-    pass
+        return sep.join(result)
