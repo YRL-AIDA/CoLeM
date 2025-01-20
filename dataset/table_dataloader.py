@@ -8,7 +8,7 @@ from torch.utils.data import Sampler
 
 
 class TableDataLoader(DataLoader):
-    """Table data loader.
+    """Table dataloader.
 
     Provides an iterable over the given dataset.
 
@@ -16,7 +16,7 @@ class TableDataLoader(DataLoader):
         dataset: dataset from which to load the data.
         batch_size: how many samples per batch to load.
         sampler: dataset sampler.
-        collate_fn: merges a list of samples to form a mini-batch of Tensors.
+        collate_fn: function that merges a list of samples to form a mini-batch of Tensors.
         num_workers: how many subprocesses to use for data loading.
     """
     def __init__(

@@ -19,11 +19,20 @@ def preprocess_delete_me(dataset: TableDataset) -> None:
 def collate(samples: list) -> torch.Tensor:
     """Preprocess data by batch.
 
+    For every sample in the mini-batch with `N` samples create a pair, resulting
+    `2 * N` mini-batch.
+
+    Upply the first augmentation on the first element of the pair in mini-batch,
+    and upply the second augmentation on the second element of the pair.
+
+    Tokenize every sample in the mini-batch with BERT tokenizer. And pad every
+    sample to the length of maximum tokenized sequence in a tokenized mini-batch. 
+
     Args:
-        samples: Samples from batch.
+        samples (list): `N` samples from mini-batch.
 
     Returns:
-        dict: Augmented columns.
+        torch.Tensor: Preprocessed mini-batch with `2 * N` samples.
     """
     config = Config()
     tokenizer = BertTokenizer.from_pretrained(config["model"]["pretrained_model_name"])
@@ -126,9 +135,18 @@ def set_rs(seed: int = 13) -> None:
 
 
 def create_samplers(dataset: pd.DataFrame, split: Union[float, int], random_state: int) -> tuple:
-    """Create train and validation samplers.
+    """Create train and validation samplers with respect to split parameter.
+
+    Shuffle dataset ids and split into train and validation subsets.
+
+    Note:
+        `split` parameter could be `int`, then in validation subset would have `split` samples,
+        and `split` could be `float`, then validation subset would have `split` % of `len(dataset)`.
     
-    TODO
+    Args:
+        dataset (pd.DataFrame): Dataset to be sampled.
+        split (float|int): Validation split size.
+        random_state (int): Random state. 
     """
     if isinstance(split, int):
         assert 0 < split < len(dataset)
@@ -145,5 +163,8 @@ def create_samplers(dataset: pd.DataFrame, split: Union[float, int], random_stat
 
     train_df = dataset[~dataset["table_id"].isin(valid_mask)]
     train_ids = train_df.index.to_numpy()
+
+    # TODO: train_ids has no intersection with valid_ids
+    assert len(set(train_ids).intersection(set(valid_ids))) == 0
 
     return SubsetRandomSampler(train_ids), SubsetRandomSampler(valid_ids)

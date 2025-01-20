@@ -10,7 +10,7 @@ class Logger:
     Log info into log files with timestamp. Supports log levels, tags and messages.
 
     Args:
-        filename: Filename of the log file.
+        filename (str): Filename of the log file.
     """
     def __init__(self, filename: str = "train.log"):
         self.filename = filename
@@ -34,8 +34,8 @@ class Logger:
         """Log info message.
 
         Args:
-            msg: Log message.
-            level: Log level.
+            msg (str): Log message.
+            level (str): Log level.
 
         Returns:
             None
@@ -46,8 +46,8 @@ class Logger:
         """Log warning message.
 
         Args:
-            msg: Log message.
-            level: Log level.
+            msg (str): Log message.
+            level (str): Log level.
 
         Returns:
             None
@@ -58,8 +58,8 @@ class Logger:
         """Log error message.
 
         Args:
-            msg: Log message.
-            level: Log level.
+            msg (str): Log message.
+            level (str): Log level.
 
         Returns:
             None
@@ -72,9 +72,9 @@ class Logger:
         Log format: [dd/mm/yy H:M:S] [tag] [level] [msg]
 
         Args:
-            tag: Log tag, could be [INFO, WARN, ERROR].
-            msg: Log message.
-            level: Log level.
+            tag (str): Log tag, could be [INFO, WARN, ERROR].
+            msg (str): Log message.
+            level (str|None): Log level.
 
         Returns:
             None

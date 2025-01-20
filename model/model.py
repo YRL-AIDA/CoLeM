@@ -34,10 +34,10 @@ class Colem(BertPreTrainedModel):
         """CoLeM forward pass.
 
         Args:
-            input (torch.Tensor): batch(2 * batch_size, sequence_length) of columns
+            input (torch.Tensor): batch(2 * batch_size, sequence_length) of table columns.
 
         Returns:
-            torch.Tensor: Model output
+            torch.Tensor: Model output.
         """
         encoder_last_hidden_state = self.encoder(
             input_ids=input_ids,

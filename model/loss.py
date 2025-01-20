@@ -5,6 +5,8 @@ from torch.nn import functional as F
 def nt_xent_loss(model_output: torch.Tensor, device: torch.device, temperature: float = 0.5) -> torch.Tensor:
     """Calculate NT-Xent loss.
 
+    NT-Xent loss (Normalized temperature Cross-entropy loss) was introduced in SimCLR paper.
+
     Args:
         model_output (torch.Tensor): Model output
         temperature (float): Loss temperature
@@ -32,14 +34,3 @@ def nt_xent_loss(model_output: torch.Tensor, device: torch.device, temperature: 
 
     # Compute cross entropy loss
     return F.cross_entropy(similarity_matrix / temperature, labels, reduction="mean")
-
-
-if __name__ == "__main__":
-    # TODO: move to tests
-    torch.manual_seed(42)
-
-    batch_size = 32
-    hidden_size = 128
-    batch = torch.randn(batch_size, hidden_size)
-    for t in (0.001, 0.01, 0.1, 1.0, 10.0):
-        print(f"Temperature: {t:.3f}, Loss: {nt_xent_loss(batch, temperature=t)}")

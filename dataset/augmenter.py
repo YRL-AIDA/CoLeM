@@ -2,20 +2,34 @@ import random
 
 
 class Augmenter:
-    """TODO"""
+    """Tabular data augmenter"""
 
     @staticmethod
-    def shuffle_row(column: str, sep: str = ">>") -> str:
-        """TODO"""
+    def shuffle_rows(column: str, sep: str = ">>") -> str:
+        """Shuffle random rows in a given column.
+
+        Args:
+            column: table column as string.
+            sep: csv separator.
+
+        Returns:
+            str: column as string with shuffled rows.
+        """
         column_as_list = column.split(sep)
         random.shuffle(column_as_list)
         return "".join(column_as_list)
 
     @staticmethod
-    def drop_cells(column: str, sep: str = " << ", ratio: float = 0.1):
-        """TODO
+    def drop_cells(column: str, sep: str = " << ", ratio: float = 0.1) -> str:
+        """Drop random cells in a given column.
+
+        Args:
+            column: table column as string.
+            sep: csv separator.
+            ratio: cells removal ratio.
         
-        Note: drops random cells
+        Returns:
+            str: column as string with deleted cells.
         """
         assert 0.0 <= ratio <= 1.0
         column_as_list = column.split(sep)

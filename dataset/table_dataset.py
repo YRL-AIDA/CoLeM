@@ -10,10 +10,12 @@ class TableDataset(Dataset):
     """Wrapper class over the dataset.
 
     Args:
-        data_dir: path to directory, where dataset .csv files placed.
-        sep: csv separator character.
-        num_rows: amount of how many rows to read per .csv file, if None read all rows.
-        file_name: name of csv file, if dataset contains only one file.
+        data_dir: Path to directory, where dataset `.csv` files was placed.
+        sep: csv separator.
+        engine: Parser engine to use.
+        quotechar: Character used to denote the start and end of a quoted item.
+        on_bad_lines: Specifies what to do upon encountering a bad line.
+        num_rows: Amount of how many rows to read per `.csv` file, if None read all rows.
         transform: Optional transform to be applied on a sample
         target_transform: Optional transform to be applied on a target.
     """
@@ -58,16 +60,18 @@ class TableDataset(Dataset):
         """Read dataframe from multiple csv files.
 
         If dataset was split into multiple files, it will be concatenated. Dataset is stored
-        in pd.Dataframe instance.
+        in a pd.Dataframe instance.
 
         Args:
-            data_dir: path to directory, where dataset .csv files placed.
+            data_dir: Path to directory, where dataset .csv files was placed.
             sep: csv separator character.
-            prefix: filename prefix for dataset files.
-            num_rows: amount of how many rows to read per .csv file, if None read all rows.
+            num_rows: Amount of how many rows to read per .csv file, if None read all rows.
+            engine: Parser engine to use.
+            quotechar: Character used to denote the start and end of a quoted item.
+            on_bad_lines: Specifies what to do upon encountering a bad line.
 
         Returns:
-            pd.Dataframe: Entire dataset as dataframe.
+            pd.Dataframe: Entire dataset as a dataframe.
         """
 
         df_list = []

@@ -16,7 +16,7 @@ from utils.functions import get_map_location
 class Trainer:
     """Model trainer.
 
-    Encapsulates training logic, saving and loading from checkpoints.
+    Trainer encapsulates training logic, and performs saving and loading from checkpoints.
 
     Args:
         model: Training model.
@@ -84,7 +84,7 @@ class Trainer:
         """Train model by epochs.
 
         Returns:
-            tuple: Tuple of losses during training.
+            dict: Dictionary of losses during training / validation.
         """
         self.train_logger.info("--- New trainer initialized ---", "TRAINER")
         for epoch in range(self.start_epoch, self.num_epochs):
@@ -149,7 +149,7 @@ class Trainer:
         """Validate epoch.
 
         Returns:
-            dict: Dictionary of validation epoch loss and metrics.
+            dict: Dictionary of validation epoch loss.
         """
         self.model.eval()
 
@@ -167,9 +167,7 @@ class Trainer:
 
                 loss = self.loss_fn(output, self.device)
                 running_loss += loss.item()
-        return {
-            "loss": running_loss / self.batch_size,
-        }
+        return {"loss": running_loss / self.batch_size}
 
     def _save_checkpoint(
             self,
