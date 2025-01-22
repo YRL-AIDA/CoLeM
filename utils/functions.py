@@ -155,16 +155,11 @@ def create_samplers(dataset: pd.DataFrame, split: Union[float, int], random_stat
         valid_size = int(len(dataset) * split)
 
     dataset_ids = np.arange(len(dataset))
-    np.random.shuffle(dataset_ids)
 
-    valid_mask = dataset["table_id"].sample(n=valid_size, random_state=random_state)
-    valid_df = dataset[dataset["table_id"].isin(valid_mask)]
-    valid_ids = valid_df.index.to_numpy()
+    valid_ids = np.random.choice(dataset_ids, size=valid_size, replace=False)
+    train_ids = np.setdiff1d(dataset_ids, valid_ids)
+    np.random.shuffle(train_ids)
 
-    train_df = dataset[~dataset["table_id"].isin(valid_mask)]
-    train_ids = train_df.index.to_numpy()
-
-    # TODO: train_ids has no intersection with valid_ids
-    assert len(set(train_ids).intersection(set(valid_ids))) == 0
-
+    # TODO: move to tests
+    assert len(np.intersect1d(train_ids, valid_ids)) == 0
     return SubsetRandomSampler(train_ids), SubsetRandomSampler(valid_ids)

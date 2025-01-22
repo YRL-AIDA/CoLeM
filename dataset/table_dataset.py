@@ -88,4 +88,6 @@ class TableDataset(Dataset):
                 nrows=num_rows
             )
             df_list.append(df)
-        return pd.concat(df_list, axis=0)
+        df = pd.concat(df_list, axis=0)
+        df.reset_index(inplace=True, drop=True)
+        return df
