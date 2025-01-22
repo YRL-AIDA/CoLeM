@@ -43,7 +43,7 @@ def collate(samples: list) -> torch.Tensor:
     for sample in samples:
         # augmentations
         first_augmentation = Augmenter.drop_cells(sample)
-        second_augmentation = Augmenter.shuffle_row(sample)
+        second_augmentation = Augmenter.shuffle_rows(sample)
         
         # tokenization
         first_augmentation = tokenizer.encode(

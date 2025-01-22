@@ -5,7 +5,7 @@ class Augmenter:
     """Tabular data augmenter"""
 
     @staticmethod
-    def shuffle_rows(column: str, sep: str = ">>") -> str:
+    def shuffle_rows(column: str, sep: str = " << ") -> str:
         """Shuffle random rows in a given column.
 
         Args:

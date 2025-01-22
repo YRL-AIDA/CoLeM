@@ -32,7 +32,6 @@ def train(config: Config):
         dataset=dataset,
         batch_size=config["train"]["batch_size"],
         sampler=train_sampler,
-        shuffle=True,
         num_workers=0,
         collate_fn=collate
     )
@@ -40,7 +39,6 @@ def train(config: Config):
         dataset=dataset,
         batch_size=config["train"]["batch_size"],
         sampler=valid_sampler,
-        shuffle=True,
         num_workers=0,
         collate_fn=collate
     )
