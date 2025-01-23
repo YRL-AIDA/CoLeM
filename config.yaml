@@ -1,0 +1,25 @@
+---
+random_state: 42  # seed
+model:
+  pretrained_model_name: "bert-base-multilingual-uncased"  # model name from HF transformers 
+  loss_latent_space_dim: 128  # model latent space dimension (loss calculates in this dimension)
+data:
+  data_dir: "data/"  # path to directory, where dataset files was placed
+  sep: "⇧"  # csv separator
+  engine: "python"  # pandas python engine to use
+  quotechar: "\""  # character used to denote the start and end of a quoted item
+  on_bad_lines: "warn"  # specifies what to do upon encountering a bad line
+  num_rows: null  # amount of rows to read per `.csv` file, if `null` read all rows
+train:
+  batch_size: 4  # how many samples per batch to load  
+  num_epochs: 2  # how many training epochs to perform
+  num_gpus: 1  # how many gpus to use
+  validation_period_epochs: 3  # period of validation (in epochs)
+  save_period_epochs: 5  # period of saving checkpoints (in epochs)
+  start_from_checkpoint: false  # flag to start training from checkpoint
+  checkpoints_dir: "checkpoints/"  # directory to store model checkpoints
+  checkpoint_name: null  # checkpoint filename to load
+logs:
+  dir: "logs/"  # directory to store logs
+  train_filename: "train.log"  # filename to store train logs.
+  validation_filename: "valid.log"  # filename to store validation logs.
