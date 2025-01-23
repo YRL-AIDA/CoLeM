@@ -68,8 +68,8 @@ def train(config: Config):
             num_training_steps=len(train_dataloader) * config["train"]["num_epochs"]
         ),
         num_epochs=config["train"]["num_epochs"],
-        train_logger=Logger(filename=config["logs"]["dir"] + config["logs"]["train_filename"]),
-        valid_logger=Logger(filename=config["logs"]["dir"] + config["logs"]["validation_filename"])
+        train_logger=Logger(config, filename=config["logs"]["train_filename"]),
+        valid_logger=Logger(config, filename=config["logs"]["validation_filename"])
     )
     return trainer.train()
 
@@ -77,7 +77,7 @@ def train(config: Config):
 if __name__ == "__main__":
     results = pd.DataFrame()
 
-    config = Config(config_path="config.json")
+    config = Config(config_path="config.yaml")
 
     losses = train(config)
 

@@ -3,6 +3,8 @@ from typing import Optional
 
 import os
 
+from config import Config
+
 
 class Logger:
     """Filesystem logger.
@@ -12,11 +14,11 @@ class Logger:
     Args:
         filename (str): Filename of the log file.
     """
-    def __init__(self, filename: str = "train.log"):
+    def __init__(self, config: Config, filename: str):
+        self.config = config
         self.filename = filename
 
-    @staticmethod
-    def nvidia_smi() -> None:
+    def nvidia_smi(self) -> None:
         """Log NVIDIA-smi into log file.
 
         Warnings:
@@ -28,7 +30,7 @@ class Logger:
         Todo:
             * If training started on a machine without NVIDIA GPUs warnings will be thrown.
         """
-        os.system("nvidia-smi >> logs/gpu.log")
+        os.system(f"nvidia-smi >> {self.config["logs"]["dir"]}gpu.log")
 
     def info(self, msg: str, level: Optional[str] = None) -> None:
         """Log info message.
@@ -80,5 +82,5 @@ class Logger:
             None
         """
         msg = f"{datetime.now():%d/%m/%y %H:%M:%S} [{tag}] [{level}] {msg}\n"
-        with open(self.filename, mode="a") as f:
+        with open(self.config["logs"]["dir"] + self.filename, mode="a") as f:
             f.write(msg)
