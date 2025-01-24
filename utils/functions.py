@@ -103,6 +103,7 @@ def prepare_device(n_gpu_use: int) -> tuple[torch.device, list]:
     if n_gpu_use > num_gpu:
         print(f"Warning: The number of GPU configured to use is {n_gpu_use}, but only {num_gpu} are available")
         n_gpu_use = num_gpu
+
     device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
     list_ids = list(range(n_gpu_use))
     return device, list_ids
@@ -119,7 +120,7 @@ def get_map_location() -> Optional[torch.device]:
     return map_location
 
 
-def set_rs(seed: int = 13) -> None:
+def set_rs(seed: int) -> None:
     """Set random seed.
 
     Args:
@@ -128,13 +129,14 @@ def set_rs(seed: int = 13) -> None:
     Returns:
         None
     """
+    np.random.seed(seed)
+
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
 
 
-def create_samplers(dataset: pd.DataFrame, split: Union[float, int], random_state: int) -> tuple:
+def create_samplers(dataset: pd.DataFrame, split: Union[float, int]) -> tuple:
     """Create train and validation samplers with respect to split parameter.
 
     Shuffle dataset ids and split into train and validation subsets.
@@ -146,7 +148,6 @@ def create_samplers(dataset: pd.DataFrame, split: Union[float, int], random_stat
     Args:
         dataset (pd.DataFrame): Dataset to be sampled.
         split (float|int): Validation split size.
-        random_state (int): Random state. 
     """
     if isinstance(split, int):
         assert 0 < split < len(dataset)
