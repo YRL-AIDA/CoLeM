@@ -66,22 +66,52 @@ def collate(samples: list) -> torch.Tensor:
         augmented_batch[augmented_pointer + 1] = second_augmentation
         augmented_pointer += 2
     
-    # get max_len of sequences in a batch TODO: move to func
-    seq_max_len_in_batch = 0
-    for sample in augmented_batch:
-        cur_seq_len = sample.shape[0]
-        if cur_seq_len > seq_max_len_in_batch:
-            seq_max_len_in_batch = cur_seq_len
+    # pad tensors to maximum sequence length in a batch
+    pad_tensors(augmented_batch)
+
+    return torch.stack(augmented_batch, dim=0)
+
+
+def pad_tensors(batch: list) -> None:
+    """Pad tensors in a batch to maximum length.
+
+    Gets maximum sequence length and pads all tensors to `max_len` with zeros
+    on the right side.
     
-    # pad tensors to max_len TODO: move to func
-    for i in range(len(augmented_batch)):
-        augmented_batch[i] = F.pad(
-            input=augmented_batch[i],
-            pad=(0, seq_max_len_in_batch - augmented_batch[i].shape[0]),
+    Note:
+        Padding performed inplace.
+
+    Args:
+        batch: List of tensors to be padded.
+    
+    Retruns:
+        None
+    """
+    seq_max_len = get_max_seq_length(batch)
+    for i in range(len(batch)):
+        batch[i] = F.pad(
+            input=batch[i],
+            pad=(0, seq_max_len - batch[i].shape[0]),
             mode="constant",
             value=0
         )
-    return torch.stack(augmented_batch, dim=0)
+
+
+def get_max_seq_length(batch: list) -> int:
+    """Get maximum sequence length in a batch.
+    
+    Args:
+        batch: List of tensors.
+    
+    Returns:
+        int: Maximum length of tensor in a batch.
+    """
+    seq_max_len_in_batch = 0
+    for sample in batch:
+        cur_seq_len = sample.shape[0]
+        if cur_seq_len > seq_max_len_in_batch:
+            seq_max_len_in_batch = cur_seq_len
+    return seq_max_len_in_batch
 
 
 def prepare_device(n_gpu_use: int) -> tuple[torch.device, list]:
@@ -107,6 +137,7 @@ def prepare_device(n_gpu_use: int) -> tuple[torch.device, list]:
     device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
     list_ids = list(range(n_gpu_use))
     return device, list_ids
+
 
 def get_map_location() -> Optional[torch.device]:
     """Get device to perform model loading.
