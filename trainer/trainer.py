@@ -192,8 +192,8 @@ class Trainer:
             None
         """
         checkpoint_path = (
-            f"{self.checkpoint_dir}model_epoch_{epoch}_"
-            f"datetime-{datetime.now():%d-%m-%y_%H-%M-%S}.pt"
+            f"{self.checkpoint_dir}epoch-{epoch}_"
+            f"{datetime.now():%d-%m-%Y_%H:%M:%S}.pt"
         )
         torch.save(
             {
