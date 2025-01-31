@@ -35,7 +35,10 @@ def collate(samples: list) -> torch.Tensor:
         torch.Tensor: Preprocessed mini-batch with `2 * N` samples.
     """
     config = Config()
-    tokenizer = BertTokenizer.from_pretrained(config["model"]["pretrained_model_name"])
+    pretrained_model_name = config["model"].get("pretrained_model_name")
+    assert pretrained_model_name is not None
+
+    tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
     batch_size = len(samples)
 
     augmented_batch = [0 for _ in range(2 * batch_size)]

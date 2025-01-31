@@ -63,8 +63,14 @@ class Trainer:
 
         self.num_epochs = num_epochs
         self.start_epoch = 0
-        self.validation_period_epochs = config["train"]["validation_period_epochs"]
-        self.save_period_epochs = config["train"]["save_period_epochs"]
+        self.validation_period_epochs = config["train"].get(
+            "validation_period_epochs",
+            5
+        )
+        self.save_period_epochs = config["train"].get(
+            "save_period_epochs",
+            10
+        )
 
         self.train_logger = train_logger
         self.valid_logger = valid_logger
@@ -74,9 +80,9 @@ class Trainer:
             "validation": []
         }
 
-        self.checkpoint_dir = config["train"]["checkpoints_dir"]
-        if config["train"]["start_from_checkpoint"]:
-            checkpoint = config["train"]["checkpoint_name"]
+        self.checkpoint_dir = config["train"].get("checkpoints_dir", "checkpoints/")
+        if config["train"].get("start_from_checkpoint", False):
+            checkpoint = config["train"].get("checkpoint_name")
             assert checkpoint is not None
             self._load_checkpoint(self.checkpoint_dir + checkpoint)
 

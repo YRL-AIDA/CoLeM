@@ -18,40 +18,49 @@ from utils.functions import create_samplers, prepare_device, collate, preprocess
 def train(config: Config):
     set_rs(config["random_state"])
 
-    # TODO: assert config variables assigned and correct
-    tokenizer = BertTokenizer.from_pretrained(config["model"]["pretrained_model_name"])
+    pretrained_model_name = config["model"].get(
+        "pretrained_model_name",
+        "bert-base-multilingual-uncased"
+    )
+
+    tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
 
     dataset = TableDataset(
-        num_rows=10,
-        data_dir="data/"
+        num_rows=config["data"].get("num_rows"),
+        data_dir=config["data"].get("dir", "data/")
     )
     preprocess_delete_me(dataset)
 
-    train_sampler, valid_sampler = create_samplers(dataset.df, 0.1, 13)
+    train_sampler, valid_sampler = create_samplers(dataset.df, 0.1)
+    batch_size = config["train"].get("batch_size", 64)
     train_dataloader = TableDataLoader(
         dataset=dataset,
-        batch_size=config["train"]["batch_size"],
+        batch_size=batch_size,
         sampler=train_sampler,
         num_workers=0,
         collate_fn=collate
     )
     valid_dataloader = TableDataLoader(
         dataset=dataset,
-        batch_size=config["train"]["batch_size"],
+        batch_size=batch_size,
         sampler=valid_sampler,
         num_workers=0,
         collate_fn=collate
     )
 
-    model = Colem(
-        BertConfig.from_pretrained(config["model"]["pretrained_model_name"]))
+    model = Colem(BertConfig.from_pretrained(pretrained_model_name))
 
-    device, device_ids = prepare_device(config["train"]["num_gpus"])
+    device, device_ids = prepare_device(config["train"].get("num_gpus", 4))
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, eps=1e-8)
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=config["train"].get("optim_lr", 5e-5),
+        eps=config["train"].get("optim_eps", 1e-8)
+    )
+    num_epochs = config["train"].get("num_epochs", 100)
     trainer = Trainer(
         model=model,
         tokenizer=tokenizer,
@@ -59,17 +68,17 @@ def train(config: Config):
         optimizer=optimizer,
         config=config,
         device=device,
-        batch_size=config["train"]["batch_size"], # TODO: STRANGE ALREADY HAVE IN DATALOADER
+        batch_size=batch_size,  # TODO: STRANGE ALREADY HAVE IN DATALOADER
         train_dataloader=train_dataloader,
         valid_dataloader=valid_dataloader,
         lr_scheduler=get_linear_schedule_with_warmup(
             optimizer,
-            num_warmup_steps=0,
-            num_training_steps=len(train_dataloader) * config["train"]["num_epochs"]
+            num_warmup_steps=0,  # TODO: use warmup
+            num_training_steps=len(train_dataloader) * num_epochs
         ),
-        num_epochs=config["train"]["num_epochs"],
-        train_logger=Logger(config, filename=config["logs"]["train_filename"]),
-        valid_logger=Logger(config, filename=config["logs"]["validation_filename"])
+        num_epochs=num_epochs,
+        train_logger=Logger(config, filename=config["logs"].get("train_filename", "train.log")),
+        valid_logger=Logger(config, filename=config["logs"].get("validation_filename", "valid.log"))
     )
     return trainer.train()
 
@@ -81,6 +90,6 @@ if __name__ == "__main__":
 
     losses = train(config)
 
-    # TODO: plot_graphs(losses, metrics, conf)
+    # plot_graphs(losses)
 
     print(losses)

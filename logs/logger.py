@@ -16,6 +16,7 @@ class Logger:
     """
     def __init__(self, config: Config, filename: str):
         self.config = config
+        self.dir = self.config["logs"].get("dir", "logs/")
         self.filename = filename
 
     def nvidia_smi(self) -> None:
@@ -30,7 +31,7 @@ class Logger:
         Todo:
             * If training started on a machine without NVIDIA GPUs warnings will be thrown.
         """
-        os.system(f"nvidia-smi >> {self.config["logs"]["dir"]}gpu.log")
+        os.system(f"nvidia-smi >> {self.dir}gpu.log")
 
     def info(self, msg: str, level: Optional[str] = None) -> None:
         """Log info message.
@@ -82,5 +83,5 @@ class Logger:
             None
         """
         msg = f"{datetime.now():%d/%m/%y %H:%M:%S} [{tag}] [{level}] {msg}\n"
-        with open(self.config["logs"]["dir"] + self.filename, mode="a") as f:
+        with open(self.dir + self.filename, mode="a") as f:
             f.write(msg)
