@@ -5,12 +5,12 @@ class Augmenter:
     """Tabular data augmenter"""
 
     @staticmethod
-    def shuffle_rows(column: str, sep: str = " << ") -> str:
+    def shuffle_rows(column: str, sep: str) -> str:
         """Shuffle random rows in a given column.
 
         Args:
             column: table column as string.
-            sep: csv separator.
+            sep: separates cells in a column as string
 
         Returns:
             str: column as string with shuffled rows.
@@ -20,12 +20,12 @@ class Augmenter:
         return "".join(column_as_list)
 
     @staticmethod
-    def drop_cells(column: str, sep: str = " << ", ratio: float = 0.1) -> str:
+    def drop_cells(column: str, sep: str, ratio: float) -> str:
         """Drop random cells in a given column.
 
         Args:
             column: table column as string.
-            sep: csv separator.
+            sep: separates cells in a column as string
             ratio: cells removal ratio.
         
         Returns:

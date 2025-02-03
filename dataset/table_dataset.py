@@ -21,14 +21,14 @@ class TableDataset(Dataset):
     """
     def __init__(
             self,
-            data_dir: str = "data/",
-            sep: str = "⇧",
-            engine: str = "python",
-            quotechar: str = '"',
-            on_bad_lines: str = "warn",
-            num_rows: Optional[int] = None,
+            data_dir: str,
+            sep: str,
+            engine: str,
+            quotechar: str,
+            on_bad_lines: str,
             transform=None,
             target_transform=None,
+            num_rows: Optional[int] = None
     ):
         
         self.df = self._read_multiple_csv(
@@ -52,10 +52,10 @@ class TableDataset(Dataset):
             self,
             data_dir: str,
             sep: str,
-            num_rows: Optional[int],
             engine: str,
             quotechar: str,
-            on_bad_lines: str
+            on_bad_lines: str,
+            num_rows: Optional[int]
     ) -> pd.DataFrame:
         """Read dataframe from multiple csv files.
 

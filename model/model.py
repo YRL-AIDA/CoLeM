@@ -13,10 +13,7 @@ class Colem(BertPreTrainedModel):
 
         # Configuration
         self.model_config = Config()["model"]
-        pretrained_model_name = self.model_config.get(
-            "pretrained_model_name",
-            "bert-base-uncased"
-        )
+        pretrained_model_name = self.model_config.get("pretrained_model_name")
         self.config = AutoConfig.from_pretrained(pretrained_model_name)
 
         # Layers
@@ -26,7 +23,7 @@ class Colem(BertPreTrainedModel):
             nn.ReLU(),
             nn.Linear(
                 in_features=self.config.hidden_size,
-                out_features=self.model_config.get("loss_latent_space_dim", 128)
+                out_features=self.model_config.get("loss_latent_space_dim")
             )
         )
 

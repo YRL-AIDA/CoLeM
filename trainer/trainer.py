@@ -40,12 +40,12 @@ class Trainer:
             config: Config,
             device: torch.device,
             batch_size: int,
+            num_epochs: int,
             train_dataloader: DataLoader,
             valid_dataloader: DataLoader,
-            lr_scheduler: Any = None,
-            num_epochs: int = 1,
-            train_logger: Logger = None,
-            valid_logger: Logger = None
+            train_logger: Logger,
+            valid_logger: Logger,
+            lr_scheduler: Any = None  # TODO: add scheduler
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -63,14 +63,8 @@ class Trainer:
 
         self.num_epochs = num_epochs
         self.start_epoch = 0
-        self.validation_period_epochs = config["train"].get(
-            "validation_period_epochs",
-            5
-        )
-        self.save_period_epochs = config["train"].get(
-            "save_period_epochs",
-            10
-        )
+        self.validation_period_epochs = config["train"].get("validation_period_epochs")
+        self.save_period_epochs = config["train"].get("save_period_epochs")
 
         self.train_logger = train_logger
         self.valid_logger = valid_logger
@@ -141,7 +135,7 @@ class Trainer:
             
             output = self.model(batch, attention_mask=attention_mask)
 
-            loss = self.loss_fn(output, self.device)
+            loss = self.loss_fn(output, self.device, temperature=self.config["model"].get("loss_temperature"))
             running_loss += loss.item()
             loss.backward()
 
@@ -171,7 +165,7 @@ class Trainer:
                 if isinstance(output, tuple):
                     output = output[0]
 
-                loss = self.loss_fn(output, self.device)
+                loss = self.loss_fn(output, self.device, temperature=self.config["model"].get("loss_temperature"))
                 running_loss += loss.item()
         return {"loss": running_loss / self.batch_size}
 

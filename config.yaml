@@ -3,13 +3,20 @@ random_state: 42  # seed
 model:
   pretrained_model_name: "bert-base-multilingual-uncased"  # model name from HF transformers 
   loss_latent_space_dim: 128  # model latent space dimension (loss calculates in this dimension)
+  tokenizer_max_len: 512  # max length of sequence during tokenization
+  padding_value: 0  # tensors padding value
+  loss_temperature: 0.5  # loss temperature parameter
 data:
   dir: "data/"  # path to directory, where dataset files was placed
-  sep: "⇧"  # csv separator
-  engine: "python"  # pandas python engine to use
+  sep: "|"  # csv separator
+  engine: "c"  # pandas engine to use
   quotechar: "\""  # character used to denote the start and end of a quoted item
   on_bad_lines: "warn"  # specifies what to do upon encountering a bad line
-  num_rows: 40  # amount of rows to read per `.csv` file, if `null` read all rows
+  num_rows: 13  # amount of rows to read per `.csv` file, if `null` read all rows
+  num_workers: 2  # number of dataloader workers
+  augmenter:
+    cells_sep: " << "  # separates cells in a column string
+    cells_del_ratio: 0.1  # cells removal ratio
 train:
   batch_size: 4  # how many samples per batch to load  
   num_epochs: 6  # how many training epochs to perform

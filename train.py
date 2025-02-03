@@ -12,7 +12,11 @@ from transformers import BertTokenizer, BertConfig, get_linear_schedule_with_war
 
 from config import Config
 from trainer.trainer import Trainer
-from utils.functions import create_samplers, prepare_device, collate, preprocess_delete_me, set_rs
+from utils.functions import create_samplers, prepare_device, collate, set_rs
+
+# TODO: 
+# global config
+# config = Config()
 
 
 def train(config: Config):
@@ -22,30 +26,33 @@ def train(config: Config):
         "pretrained_model_name",
         "bert-base-multilingual-uncased"
     )
-
     tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
 
     dataset = TableDataset(
-        num_rows=config["data"].get("num_rows"),
-        data_dir=config["data"].get("dir", "data/")
+        data_dir=config["data"].get("dir", "data/"),
+        sep=config["data"].get("sep", "|"),
+        engine=config["data"].get("engine", "c"),
+        quotechar=config["data"].get("quotechar", "\""),
+        on_bad_lines=config["data"].get("on_bad_lines", "warn"),
+        num_rows=config["data"].get("num_rows")
     )
-    preprocess_delete_me(dataset)
 
     train_sampler, valid_sampler = create_samplers(dataset.df, 0.1)
     batch_size = config["train"].get("batch_size", 64)
+    num_workers = config["data"].get("num_workers", 2)
     train_dataloader = TableDataLoader(
         dataset=dataset,
         batch_size=batch_size,
         sampler=train_sampler,
-        num_workers=0,
-        collate_fn=collate
+        collate_fn=collate,
+        num_workers=num_workers
     )
     valid_dataloader = TableDataLoader(
         dataset=dataset,
         batch_size=batch_size,
         sampler=valid_sampler,
-        num_workers=0,
-        collate_fn=collate
+        collate_fn=collate,
+        num_workers=num_workers
     )
 
     model = Colem(BertConfig.from_pretrained(pretrained_model_name))
@@ -86,7 +93,7 @@ def train(config: Config):
 if __name__ == "__main__":
     results = pd.DataFrame()
 
-    config = Config(config_path="config.yaml")
+    config = Config()
 
     losses = train(config)
 

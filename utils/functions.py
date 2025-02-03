@@ -8,12 +8,6 @@ import torch.nn.functional as F
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from dataset.augmenter import Augmenter
-from dataset.table_dataset import TableDataset
-
-
-def preprocess_delete_me(dataset: TableDataset) -> None:
-    """TODO: delete me when preprocess will perform on creating dataset step."""
-    dataset.df = dataset.df[~dataset.df["column_data"].isna()]
 
 
 def collate(samples: list) -> torch.Tensor:
@@ -35,6 +29,7 @@ def collate(samples: list) -> torch.Tensor:
         torch.Tensor: Preprocessed mini-batch with `2 * N` samples.
     """
     config = Config()
+    aug_settings = config["data"]["augmenter"]
     pretrained_model_name = config["model"].get("pretrained_model_name")
     assert pretrained_model_name is not None
 
@@ -45,21 +40,26 @@ def collate(samples: list) -> torch.Tensor:
     augmented_pointer = 0
     for sample in samples:
         # augmentations
-        first_augmentation = Augmenter.drop_cells(sample)
-        second_augmentation = Augmenter.shuffle_rows(sample)
+        first_augmentation = Augmenter.drop_cells(
+            sample,
+            sep=aug_settings.get("cells_sep"),
+            ratio=aug_settings.get("cells_del_ratio")
+        )
+        second_augmentation = Augmenter.shuffle_rows(sample, sep=aug_settings.get("cells_sep"))
         
         # tokenization
+        max_length = config["model"].get("tokenizer_max_len")
         first_augmentation = tokenizer.encode(
             first_augmentation,
             add_special_tokens=True,
-            max_length=512,
+            max_length=max_length,
             truncation=True,
             return_tensors="pt"
         ).squeeze()
         second_augmentation = tokenizer.encode(
             second_augmentation,
             add_special_tokens=True,
-            max_length=512,
+            max_length=max_length,
             truncation=True,
             return_tensors="pt"
         ).squeeze()
@@ -70,19 +70,19 @@ def collate(samples: list) -> torch.Tensor:
         augmented_pointer += 2
     
     # pad tensors to maximum sequence length in a batch
-    pad_tensors(augmented_batch)
+    pad_tensors(augmented_batch, config["model"].get("padding_value"))
 
     return torch.stack(augmented_batch, dim=0)
 
 
-def pad_tensors(batch: list) -> None:
+def pad_tensors(batch: list, padding_value: float) -> None:
     """Pad tensors in a batch to maximum length.
 
     Gets maximum sequence length and pads all tensors to `max_len` with zeros
     on the right side.
     
     Note:
-        Padding performed inplace.
+        Padding performed inplace on the right side of the input tensor.
 
     Args:
         batch: List of tensors to be padded.
@@ -96,7 +96,7 @@ def pad_tensors(batch: list) -> None:
             input=batch[i],
             pad=(0, seq_max_len - batch[i].shape[0]),
             mode="constant",
-            value=0
+            value=padding_value
         )
 
 
