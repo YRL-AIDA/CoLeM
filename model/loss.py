@@ -16,11 +16,12 @@ def nt_xent_loss(model_output: torch.Tensor, device: torch.device, temperature: 
     """
     assert len(model_output.size()) == 2
     batch_size = model_output.shape[0]
+    hidden_size = model_output.shape[1]
 
     # Cosine similarity
     similarity_matrix = F.cosine_similarity(
-        model_output.reshape(1, model_output.size()[0], model_output.size()[1]),
-        model_output.reshape(model_output.size()[0], 1, model_output.size()[1]),
+        model_output.reshape(1, batch_size, hidden_size),
+        model_output.reshape(batch_size, 1, hidden_size),
         dim=-1
     )
 
