@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 from transformers import BertPreTrainedModel
 
@@ -16,16 +17,19 @@ class Colem(BertPreTrainedModel):
         pretrained_model_name = self.model_config.get("pretrained_model_name")
         self.config = AutoConfig.from_pretrained(pretrained_model_name)
 
-        # Layers
+        # Encoder layers
         self.encoder = AutoModel.from_pretrained(pretrained_model_name)
-        self.projector = nn.Sequential(
-            nn.Linear(in_features=self.config.hidden_size, out_features=self.config.hidden_size),
-            nn.ReLU(),
-            nn.Linear(
-                in_features=self.config.hidden_size,
-                out_features=self.model_config.get("loss_latent_space_dim")
-            )
+        
+        # Projector layers
+        self.projector_lin1 = nn.Linear(in_features=self.config.hidden_size, out_features=self.config.hidden_size)
+        self.projector_bn = nn.BatchNorm1d(num_features=self.config.hidden_size)
+        self.projector_lin2 = nn.Linear(
+            in_features=self.config.hidden_size,
+            out_features=self.model_config.get("loss_latent_space_dim")
         )
+        
+        # Initialize non-pretrained layers
+        self.init_weights()
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         """CoLeM forward pass.
@@ -40,7 +44,10 @@ class Colem(BertPreTrainedModel):
             input_ids=input_ids,
             attention_mask=attention_mask
         )[0]  # (2 * batch_size, sequence_length, encoder_output)
-        projector_output = self.projector(encoder_last_hidden_state)  # (2 * batch_size, sequence_length, reduced_output)
+        
+        x = F.relu(self.projector_lin1(encoder_last_hidden_state))
+        x = self.projector_bn(x.permute(0, 2, 1))
+        projector_output = self.projector_lin2(x.permute(0, 2, 1))
 
         # Get column representations, i.e. encoder [CLS] token positions.
         output = projector_output[:, 0, :]  # (2 * batch_size, reduced_output)

@@ -27,7 +27,7 @@ train:
   checkpoints_dir: "checkpoints/"  # directory to store model checkpoints
   checkpoint_name: null  # checkpoint filename to load
   optim_lr: 0.00005  # optimizer learning rate
-  optim_eps: 0.00000001  # optimizer epsilon
+  optim_eps: 0.000001  # optimizer epsilon
   lr_scheduler_warmup_steps:  # TODO
 logs:
   dir: "logs/"  # directory to store logs

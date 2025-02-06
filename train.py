@@ -14,10 +14,6 @@ from config import Config
 from trainer.trainer import Trainer
 from utils.functions import create_samplers, prepare_device, collate, set_rs
 
-# TODO: 
-# global config
-# config = Config()
-
 
 def train(config: Config):
     set_rs(config["random_state"])
@@ -56,16 +52,18 @@ def train(config: Config):
     )
 
     model = Colem(BertConfig.from_pretrained(pretrained_model_name))
+    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
     device, device_ids = prepare_device(config["train"].get("num_gpus", 4))
     model = model.to(device)
     if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        # model = torch.nn.DataParallel(model, device_ids=device_ids)
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=device_ids)
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=config["train"].get("optim_lr", 5e-5),
-        eps=config["train"].get("optim_eps", 1e-8)
+        eps=config["train"].get("optim_eps", 1e-6)
     )
     num_epochs = config["train"].get("num_epochs", 100)
     trainer = Trainer(
@@ -96,7 +94,5 @@ if __name__ == "__main__":
     config = Config()
 
     losses = train(config)
-
-    # plot_graphs(losses)
 
     print(losses)
