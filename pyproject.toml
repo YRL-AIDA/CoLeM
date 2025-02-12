@@ -17,7 +17,12 @@ pytest = "^8.3.4"
 jupyter = "^1.1.1"
 lab = "^8.3"
 pyyaml = "^6.0.2"
+protobuf = "^5.29.3"
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
 
 [build-system]
 requires = ["poetry-core"]

@@ -27,9 +27,6 @@ class Logger:
 
         Returns:
             None
-
-        Todo:
-            * If training started on a machine without NVIDIA GPUs warnings will be thrown.
         """
         os.system(f"nvidia-smi >> {self.dir}gpu.log")
 
