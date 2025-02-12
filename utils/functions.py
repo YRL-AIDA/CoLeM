@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from config import Config
 import torch
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 import torch.nn.functional as F
 from torch.utils.data.sampler import SubsetRandomSampler
 
@@ -33,7 +33,7 @@ def collate(samples: list) -> torch.Tensor:
     pretrained_model_name = config["model"].get("pretrained_model_name")
     assert pretrained_model_name is not None
 
-    tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
     batch_size = len(samples)
 
     augmented_batch = [0 for _ in range(2 * batch_size)]

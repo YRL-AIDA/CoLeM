@@ -45,7 +45,7 @@ class Trainer:
             valid_dataloader: DataLoader,
             train_logger: Logger,
             valid_logger: Logger,
-            lr_scheduler: Any = None  # TODO: add scheduler
+            lr_scheduler: Any = None
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -130,6 +130,7 @@ class Trainer:
 
         running_loss = 0.0
         for batch in self.train_dataloader:
+            self.model.zero_grad(set_to_none=True)
             batch = batch.to(self.device)
             attention_mask = torch.clone(batch != 0).to(self.device)
             
@@ -140,7 +141,6 @@ class Trainer:
             loss.backward()
 
             self.optimizer.step()
-            self.model.zero_grad(set_to_none=True)  # set_to_none is more efficient
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
         return {"loss": running_loss / self.batch_size}
@@ -200,6 +200,7 @@ class Trainer:
                 "epoch": epoch,
                 "model_state_dict": self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
+                "lr_scheduler_state_dict": self.lr_scheduler.state_dict(),
                 "losses": losses,
             },
             checkpoint_path
@@ -219,6 +220,7 @@ class Trainer:
         checkpoint = torch.load(checkpoint_path, map_location=get_map_location())
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
 
         self.start_epoch = checkpoint["epoch"] + 1
         self.losses = checkpoint["losses"]
