@@ -1,34 +1,33 @@
 ---
 random_state: 42  # seed
 model:
-  pretrained_model_name: "bert-base-multilingual-uncased"  # model name from HF transformers 
+  pretrained_model_name: "distilbert-base-multilingual-cased"  # model name from HF transformers 
   loss_latent_space_dim: 128  # model latent space dimension (loss calculates in this dimension)
-  tokenizer_max_len: 512  # max length of sequence during tokenization
+  tokenizer_max_len: 256  # max length of sequence during tokenization
   padding_value: 0  # tensors padding value
-  loss_temperature: 0.5  # loss temperature parameter
+  loss_temperature: 0.1  # loss temperature parameter
 data:
   dir: "data/"  # path to directory, where dataset files was placed
   sep: "|"  # csv separator
   engine: "c"  # pandas engine to use
   quotechar: "\""  # character used to denote the start and end of a quoted item
   on_bad_lines: "warn"  # specifies what to do upon encountering a bad line
-  num_rows: 13  # amount of rows to read per `.csv` file, if `null` read all rows
-  num_workers: 2  # number of dataloader workers
+  num_rows: 50  # number of rows to read per `.csv` file, if `null` read all rows
+  num_workers: 0  # number of dataloader workers
   augmenter:
     cells_sep: " << "  # separates cells in a column string
     cells_del_ratio: 0.1  # cells removal ratio
 train:
-  batch_size: 4  # how many samples per batch to load  
-  num_epochs: 6  # how many training epochs to perform
+  batch_size: 30  # how many samples per batch to load, actual batch_size = 2 * batch_size  
+  num_epochs: 10  # how many training epochs to perform
   num_gpus: 1  # how many gpus to use
   validation_period_epochs: 3  # period of validation (in epochs)
-  save_period_epochs: 5  # period of saving checkpoints (in epochs)
+  save_period_epochs: 11  # period of saving checkpoints (in epochs)
   start_from_checkpoint: false  # flag to start training from checkpoint
   checkpoints_dir: "checkpoints/"  # directory to store model checkpoints
   checkpoint_name: null  # checkpoint filename to load
   optim_lr: 0.00005  # optimizer learning rate
   optim_eps: 0.000001  # optimizer epsilon
-  lr_scheduler_warmup_steps:  # TODO
 logs:
   dir: "logs/"  # directory to store logs
   train_filename: "train.log"  # filename to store train logs.
