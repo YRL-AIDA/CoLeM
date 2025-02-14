@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Union
 import numpy as np
 import pandas as pd
@@ -8,6 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from dataset.augmenter import Augmenter
+
+import torch.distributed as dist
 
 
 def collate(samples: list) -> torch.Tensor:
@@ -152,6 +155,16 @@ def get_map_location() -> Optional[torch.device]:
     if not torch.cuda.is_available():
         map_location = torch.device("cpu")
     return map_location
+
+
+def setup(rank, world_size, config):
+    os.environ["MASTER_ADDR"] = config["ddp"].get("master_addr", "localhost")
+    os.environ["MASTER_PORT"] = config["ddp"].get("master_port", "12355")
+    dist.init_process_group(config["ddp"].get("backend", "nccl"), rank=rank, world_size=world_size)
+
+
+def cleanup():
+    dist.destroy_process_group()
 
 
 def set_rs(seed: int) -> None:

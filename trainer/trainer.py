@@ -12,6 +12,11 @@ from config import Config
 from logs.logger import Logger
 from utils.functions import get_map_location
 
+import torch.distributed as dist
+
+# TODO: change validation to eval
+# TODO: sync logs and calculate loss (need all_reduce?)
+
 
 class Trainer:
     """Model trainer.
@@ -42,10 +47,11 @@ class Trainer:
             batch_size: int,
             num_epochs: int,
             train_dataloader: DataLoader,
-            valid_dataloader: DataLoader,
+            eval_dataloader: DataLoader,
             train_logger: Logger,
-            valid_logger: Logger,
-            lr_scheduler: Any = None
+            eval_logger: Logger,
+            lr_scheduler: Any = None,
+            ddp: bool = False
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -56,10 +62,11 @@ class Trainer:
         self.device = device
 
         self.train_dataloader = train_dataloader
-        self.valid_dataloader = valid_dataloader
+        self.eval_dataloader = eval_dataloader
         self.batch_size = batch_size
 
         self.lr_scheduler = lr_scheduler
+        self.ddp = ddp
 
         self.num_epochs = num_epochs
         self.start_epoch = 0
@@ -67,7 +74,7 @@ class Trainer:
         self.save_period_epochs = config["train"].get("save_period_epochs")
 
         self.train_logger = train_logger
-        self.valid_logger = valid_logger
+        self.eval_logger = eval_logger
 
         self.losses = {
             "train": [],
@@ -97,17 +104,17 @@ class Trainer:
                 "LOSS"
             )
 
-            if epoch % self.validation_period_epochs == 0:
+            if (self.device == 0 or self.device == "cpu") and epoch % self.validation_period_epochs == 0:
                 self.train_logger.nvidia_smi()
 
                 valid_loss = self._validate_epoch()
                 self.losses["validation"].append(valid_loss["loss"])
-                self.valid_logger.info(
+                self.eval_logger.info(
                     f"Epoch {epoch}. Valid loss: {valid_loss['loss']}.",
                     "LOSS"
                 )
 
-            if (epoch + 1) % self.save_period_epochs == 0:
+            if (self.device == 0 or self.device == "cpu") and (epoch + 1) % self.save_period_epochs == 0:
                 self._save_checkpoint(
                     epoch,
                     self.losses,
@@ -155,7 +162,7 @@ class Trainer:
 
         running_loss = 0.0
         with torch.no_grad():
-            for batch in self.valid_dataloader:
+            for batch in self.eval_dataloader:
                 batch = batch.to(self.device)
                 attention_mask = torch.clone(batch != 0)
                 attention_mask.to(self.device)
@@ -217,7 +224,14 @@ class Trainer:
         Returns:
             None
         """
-        checkpoint = torch.load(checkpoint_path, map_location=get_map_location())
+
+        if self.ddp:
+            dist.barrier()
+            map_location = {'cuda:%d' % 0: 'cuda:%d' % self.device}
+        else:
+            map_location = get_map_location()
+
+        checkpoint = torch.load(checkpoint_path, map_location=map_location)
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
