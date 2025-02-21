@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import torch
 
 from dataset.table_dataloader import TableDataLoader
@@ -13,7 +12,7 @@ from transformers import AutoTokenizer, AutoConfig
 
 from config import Config
 from trainer.trainer import Trainer
-from utils.functions import cleanup, collate, setup
+from utils.functions import cleanup, collate, get_available_device_count, setup
 
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -22,8 +21,8 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def train(rank: int, world_size: int, config: Config):
-    if config["ddp"].get("use"):
-        print(f"Running train DDP on rank {rank}.")
+    if world_size > 1:
+        print(f"Running DDP task on rank: {rank}.")
         setup(rank, world_size, config)
 
     pretrained_model_name = config["model"].get(
@@ -40,7 +39,7 @@ def train(rank: int, world_size: int, config: Config):
         on_bad_lines=config["data"].get("on_bad_lines", "skip"),
         num_rows=config["data"].get("num_rows")
     )
-    if config["ddp"].get("use"):
+    if world_size > 1:
         train_sampler = DistributedSampler(train_dataset)
     else:
         train_sampler = SubsetRandomSampler(np.arange(len(train_dataset.df)))
@@ -73,13 +72,13 @@ def train(rank: int, world_size: int, config: Config):
     )
 
     model = Colem(AutoConfig.from_pretrained(pretrained_model_name))
-    if config["ddp"].get("use"):
+    if world_size > 1:
        model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-       device = rank
+       device = torch.device(f"cuda:{rank}")
        model.to(device)
        model = DDP(model, device_ids=[rank])
     else:
-        device = torch.device('cuda:0' if torch.cuda.device_count() == 0 else 'cpu')
+        device = torch.device("cuda:0" if torch.cuda.is_available else "cpu")
         model.to(device)
 
     optimizer = torch.optim.AdamW(
@@ -97,25 +96,28 @@ def train(rank: int, world_size: int, config: Config):
         optimizer=optimizer,
         config=config,
         device=device,
+        world_size=world_size,
         batch_size=batch_size,
         train_dataloader=train_dataloader,
         eval_dataloader=eval_dataloader,
         lr_scheduler=lr_scheduler,
         num_epochs=num_epochs,
         train_logger=Logger(config, filename=config["logs"].get("train_filename", "train.log")),
-        eval_logger=Logger(config, filename=config["logs"].get("validation_filename", "valid.log"))
+        eval_logger=Logger(config, filename=config["logs"].get("eval_filename", "eval.log"))
     )
 
     trainer.train()
-    cleanup()
-    print(f"Finished running basic DDP example on rank {rank}.")
+    if world_size > 1:
+        cleanup()
+        print(f"Finished running DDP task on rank: {rank}.")
 
 
 if __name__ == "__main__":
     config = Config()
     
-    world_size = torch.cuda.device_count()
-    if config["ddp"].get("use"):  # TODO: change to True to see
+    world_size = get_available_device_count(config["train"].get("num_gpus"))
+    if world_size > 1:
+        # perform training with DDP
         mp.spawn(
             train,
             args=(world_size, config),
@@ -123,5 +125,4 @@ if __name__ == "__main__":
             join=True
         )
     else:
-        losses = train(None, world_size, config)
-        print(losses)
+        train(None, world_size, config)

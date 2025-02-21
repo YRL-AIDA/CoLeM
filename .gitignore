@@ -143,7 +143,8 @@ cython_debug/
 # ------ End of generic gitignore -------
 
 # Dataset files
-data/*.csv
+data/train/*.csv
+data/eval/*.csv
 
 # Checkpoints
 checkpoints/*.pt

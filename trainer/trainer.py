@@ -3,6 +3,7 @@ from typing import Callable, Any
 import torch
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torch.nn.modules.utils import consume_prefix_in_state_dict_if_present
 
 from transformers import BertPreTrainedModel, BertTokenizer
 
@@ -10,12 +11,8 @@ from datetime import datetime
 
 from config import Config
 from logs.logger import Logger
-from utils.functions import get_map_location
 
 import torch.distributed as dist
-
-# TODO: change validation to eval
-# TODO: sync logs and calculate loss (need all_reduce?)
 
 
 class Trainer:
@@ -44,14 +41,14 @@ class Trainer:
             optimizer: Optimizer,
             config: Config,
             device: torch.device,
+            world_size: int,
             batch_size: int,
             num_epochs: int,
             train_dataloader: DataLoader,
             eval_dataloader: DataLoader,
             train_logger: Logger,
             eval_logger: Logger,
-            lr_scheduler: Any = None,
-            ddp: bool = False
+            lr_scheduler: Any = None
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -60,17 +57,17 @@ class Trainer:
 
         self.config = config
         self.device = device
+        self.world_size = world_size
 
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
         self.batch_size = batch_size
 
         self.lr_scheduler = lr_scheduler
-        self.ddp = ddp
 
         self.num_epochs = num_epochs
         self.start_epoch = 0
-        self.validation_period_epochs = config["train"].get("validation_period_epochs")
+        self.eval_period_epochs = config["train"].get("eval_period_epochs")
         self.save_period_epochs = config["train"].get("save_period_epochs")
 
         self.train_logger = train_logger
@@ -78,8 +75,10 @@ class Trainer:
 
         self.losses = {
             "train": [],
-            "validation": []
+            "eval": []
         }
+
+        self.do_log = self.device.type == "cpu" or self.device.index == 0
 
         self.checkpoint_dir = config["train"].get("checkpoints_dir", "checkpoints/")
         if config["train"].get("start_from_checkpoint", False):
@@ -91,30 +90,33 @@ class Trainer:
         """Train model by epochs.
 
         Returns:
-            dict: Dictionary of losses during training / validation.
+            dict: Dictionary of losses during training / evaluation.
         """
-        self.train_logger.info("--- New trainer initialized ---", "TRAINER")
+        if self.do_log:
+            self.train_logger.info("--- New trainer initialized ---", "TRAINER")
         for epoch in range(self.start_epoch, self.num_epochs):
-            self.train_logger.info(f"Epoch #{epoch} started.", "EPOCH")
+            if self.do_log:
+                self.train_logger.info(f"Epoch #{epoch} started.", "EPOCH")
 
             train_loss = self._train_epoch()
             self.losses["train"].append(train_loss["loss"])
-            self.train_logger.info(
-                f"Epoch {epoch}. Train loss: {train_loss['loss']}.",
-                "LOSS"
-            )
-
-            if (self.device == 0 or self.device == "cpu") and epoch % self.validation_period_epochs == 0:
-                self.train_logger.nvidia_smi()
-
-                valid_loss = self._validate_epoch()
-                self.losses["validation"].append(valid_loss["loss"])
-                self.eval_logger.info(
-                    f"Epoch {epoch}. Valid loss: {valid_loss['loss']}.",
+            if self.do_log:
+                self.train_logger.info(
+                    f"Epoch {epoch}. Train loss: {train_loss['loss']}.",
                     "LOSS"
                 )
 
-            if (self.device == 0 or self.device == "cpu") and (epoch + 1) % self.save_period_epochs == 0:
+            if self.do_log and epoch % self.eval_period_epochs == 0:
+                self.train_logger.nvidia_smi()
+
+                eval_loss = self._validate_epoch()
+                self.losses["eval"].append(eval_loss["loss"])
+                self.eval_logger.info(
+                    f"Epoch {epoch}. Evaluation loss: {eval_loss['loss']}.",
+                    "LOSS"
+                )
+
+            if self.do_log and epoch % self.save_period_epochs == 0:
                 self._save_checkpoint(
                     epoch,
                     self.losses,
@@ -123,8 +125,10 @@ class Trainer:
                     f"Epoch {epoch}. Model has been saved.",
                     "PERIODIC_SAVED"
                 )
-            self.train_logger.info("--- --- ---", "EPOCH")
-        self.train_logger.info(f"Training successfully ended.", "TRAINER")
+            if self.do_log:
+                self.train_logger.info("--- --- ---", "EPOCH")
+        if self.do_log:
+            self.train_logger.info(f"Training successfully ended.", "TRAINER")
         return self.losses
 
     def _train_epoch(self) -> dict:
@@ -156,7 +160,7 @@ class Trainer:
         """Validate epoch.
 
         Returns:
-            dict: Dictionary of validation epoch loss.
+            dict: Dictionary of evaluation epoch loss.
         """
         self.model.eval()
 
@@ -189,11 +193,11 @@ class Trainer:
             - number of epoch
             - model state dict
             - optimizer state dict
-            - train/validation losses
+            - train/eval losses
 
         Args:
             epoch: Number of current epoch.
-            losses: Dictionary of model's train / validation losses.
+            losses: Dictionary of model's train / eval losses.
 
         Returns:
             None
@@ -225,14 +229,17 @@ class Trainer:
             None
         """
 
-        if self.ddp:
+        if self.world_size > 1:
             dist.barrier()
-            map_location = {'cuda:%d' % 0: 'cuda:%d' % self.device}
+            map_location = {f"cuda:0": f"cuda:{self.device.index}"}
         else:
-            map_location = get_map_location()
-
-        checkpoint = torch.load(checkpoint_path, map_location=map_location)
+            map_location = self.device
+        checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
+        
+        if self.world_size <= 1:
+            consume_prefix_in_state_dict_if_present(checkpoint["model_state_dict"], "module.")
         self.model.load_state_dict(checkpoint["model_state_dict"])
+
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
 

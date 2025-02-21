@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Union
 import numpy as np
 import pandas as pd
 from config import Config
@@ -120,41 +120,24 @@ def get_max_seq_length(batch: list) -> int:
     return seq_max_len_in_batch
 
 
-def prepare_device(n_gpu_use: int) -> tuple[torch.device, list]:
-    """Prepare GPUs for training.
-
-    Note:
-        Supports multiple GPUs.
+def get_available_device_count(num_gpus: int) -> tuple[torch.device, list]:
+    """Get number of available gpus.
 
     Args:
-        n_gpu_use: Number of GPUs to prepare.
+        num_gpus: Number of GPUs to prepare.
 
     Returns:
-        tuple: Device and list of available GPUs, if machine have multiple GPUs available.
+        int: Number of available GPUs.
     """
-    num_gpu = torch.cuda.device_count()
-    if n_gpu_use > 0 and num_gpu == 0:
+    available_devices = num_gpus
+    world_size = torch.cuda.device_count()
+    if num_gpus > 0 and world_size == 0:
         print("Warning: No GPU available on this machine, training will be performed on CPU.")
-        n_gpu_use = 0
-    if n_gpu_use > num_gpu:
-        print(f"Warning: The number of GPU configured to use is {n_gpu_use}, but only {num_gpu} are available")
-        n_gpu_use = num_gpu
-
-    device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
-    list_ids = list(range(n_gpu_use))
-    return device, list_ids
-
-
-def get_map_location() -> Optional[torch.device]:
-    """Get device to perform model loading.
-
-    Returns:
-        Optional[torch.device]: device to perform load function.
-    """
-    map_location = None
-    if not torch.cuda.is_available():
-        map_location = torch.device("cpu")
-    return map_location
+        available_devices = 0
+    if num_gpus > world_size:
+        print(f"Warning: The number of GPU configured to use is {num_gpus}, but only {world_size} are available")
+        available_devices = world_size
+    return available_devices
 
 
 def setup(rank, world_size, config):
