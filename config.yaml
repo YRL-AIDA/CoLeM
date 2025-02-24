@@ -4,6 +4,7 @@ ddp:
   master_addr: "localhost"  # DDP master address, default localhost
   master_port: "12355"  # DDP master port, check if it is available
   backend: "nccl"  # DDP backend, nccl is the fastest (by NVIDIA)
+  timeout: 180  # Backend timeout in minutes
 model:
   pretrained_model_name: "distilbert-base-multilingual-cased"  # model name from HF transformers 
   loss_latent_space_dim: 128  # model latent space dimension (loss calculates in this dimension)
