@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from typing import Union
 import numpy as np
@@ -143,7 +144,7 @@ def get_available_device_count(num_gpus: int) -> tuple[torch.device, list]:
 def setup(rank, world_size, config):
     os.environ["MASTER_ADDR"] = config["ddp"].get("master_addr", "localhost")
     os.environ["MASTER_PORT"] = config["ddp"].get("master_port", "12355")
-    dist.init_process_group(config["ddp"].get("backend", "nccl"), rank=rank, world_size=world_size)
+    dist.init_process_group(backend=config["ddp"]["backend"], timeout=timedelta(hours=3), rank=rank, world_size=world_size)
 
 
 def cleanup():
