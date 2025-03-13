@@ -1,17 +1,28 @@
+
 [tool.poetry]
+package-mode = false
 name = "colem"
 version = "0.1.0"
 description = "CoLeM framework is a table model based on contrastive learning techniques for solving the problem of Column Type Annotation."
-authors = ["Kirill Tobola <kirilltobola@gmail.com>"]
+authors = ["Kirill Tobola <kirilltobola@gmail.com>", "Nikita Dorodnykh <nikidorny@icc.ru>"]
 license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 torch = "^2.5.1"
 transformers = "^4.47.0"
 pandas = "^2.2.3"
+pytest = "^8.3.4"
+jupyter = "^1.1.1"
+lab = "^8.3"
+pyyaml = "^6.0.2"
+protobuf = "^5.29.3"
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
 
 [build-system]
 requires = ["poetry-core"]

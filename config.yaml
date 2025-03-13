@@ -1,0 +1,40 @@
+---
+random_state: 42  # seed
+ddp:
+  master_addr: "localhost"  # DDP master address, default localhost
+  master_port: "12355"  # DDP master port, check if it is available
+  backend: "nccl"  # DDP backend, nccl is the fastest (by NVIDIA)
+  timeout: 180  # Backend timeout in minutes
+model:
+  pretrained_model_name: "distilbert-base-multilingual-cased"  # model name from HF transformers 
+  loss_latent_space_dim: 128  # model latent space dimension (loss calculates in this dimension)
+  tokenizer_max_len: 256  # max length of sequence during tokenization
+  padding_value: 0  # tensors padding value
+  loss_temperature: 0.1  # loss temperature parameter
+data:
+  train_dir: "data/train/"
+  eval_dir: "data/eval/"
+  sep: "|"  # csv separator
+  engine: "c"  # pandas engine to use
+  quotechar: "\""  # character used to denote the start and end of a quoted item
+  on_bad_lines: "warn"  # specifies what to do upon encountering a bad line
+  num_rows: null  # number of rows to read per `.csv` file, if `null` read all rows
+  num_workers: 0  # number of dataloader workers
+  augmenter:
+    cells_sep: " << "  # separates cells in a column string
+    cells_del_ratio: 0.1  # cells removal ratio
+train:
+  batch_size: 512  # how many samples per batch to load, actual batch_size = 2 * batch_size  
+  num_epochs: 300  # how many training epochs to perform
+  num_gpus: 4  # how many gpus to use
+  eval_period_epochs: 5  # period of validation (in epochs)
+  save_period_epochs: 5  # period of saving checkpoints (in epochs)
+  start_from_checkpoint: false  # flag to start training from checkpoint
+  checkpoints_dir: "checkpoints/"  # directory to store model checkpoints
+  checkpoint_name: "epoch-6_21-02-2025_15_41_53.pt"  # checkpoint filename to load
+  optim_lr: 0.00005  # optimizer learning rate
+  optim_eps: 0.000001  # optimizer epsilon
+logs:
+  dir: "logs/"  # directory to store logs
+  train_filename: "train.log"  # filename to store train logs.
+  eval_filename: "eval.log"  # filename to store validation logs.
